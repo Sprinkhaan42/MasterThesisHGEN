@@ -13,7 +13,7 @@ import utils
 import scipy.sparse as sp
 import networkx as nx
 from collections import Counter
-from torch_two_sample import MMDStatistic
+#from torch_two_sample import MMDStatistic
 import matplotlib.pyplot as plt
 import time
 
@@ -47,8 +47,8 @@ parser.add_argument("--n-critic", type=int, default=5,
                     help="number of training steps for discriminator per iter")
 parser.add_argument("--n-epochs", type=int, default=5,
                     help="The number of epochs.")
-parser.add_argument("--dataset", choices=["syn_100", "syn_200", "syn_500", "PubMed", "IMDB_movie", "DBLP_four_area"], 
-                    default="IMDB_movie", help="The choice of dataset.")
+parser.add_argument("--dataset", choices=["syn_100", "syn_200", "syn_500", "PubMed", "IMDB_movie", "DBLP_four_area","Youshu"],
+                    default="Youshu", help="The choice of dataset.")
 parser.add_argument("--edge-type", type=bool, default=False,
                     help="Whether to predict edge type.")
 parser.add_argument("--save", type=bool, default=False,
@@ -64,7 +64,7 @@ def data_preprocess(val_share, test_share, seed, directory=args.dataset):
     _X_obs, _A_obs = utils.load_HIN(directory)
     _A_obs[_A_obs > 1] = 1
     _A_obs[_A_obs < 0] = 0
-    diag_A = np.diag(np.diag(np.ones(_A_obs.shape)))
+    diag_A = np.diag(np.diag(np.ones(_A_obs.shape, dtype='uint8')))
     _A_obs = _A_obs - sp.csr_matrix(diag_A)
     _A_obs = _A_obs + _A_obs.T
     _A_obs[_A_obs > 1] = 1
@@ -342,18 +342,20 @@ def evaluation(orig_A, test_A, syn_A):
     # Node Degree Distribution
     test_degree_sequence = sorted([d for n, d in orig_G.degree()], reverse=True)  # degree sequence
     syn_degree_sequence = sorted([d for n, d in syn_G.degree()], reverse=True)  # degree sequence
-    mmd_test = MMDStatistic(len(test_degree_sequence), len(syn_degree_sequence))
+    #mmd_test = MMDStatistic(len(test_degree_sequence), len(syn_degree_sequence))
     test_degree_sequence = torch.tensor(test_degree_sequence).unsqueeze(-1)
     syn_degree_sequence = torch.tensor(syn_degree_sequence).unsqueeze(-1)
 
-    print("MMD distance for node degree distribution: {}".format(mmd_test(
-        test_degree_sequence, syn_degree_sequence, alphas=[4.], ret_matrix=False)))
+    #print("MMD distance for node degree distribution: {}".format(mmd_test(
+     #   test_degree_sequence, syn_degree_sequence, alphas=[4.], ret_matrix=False)))
     print("Degree Assortativity \t\t real graph: {}".format(
         nx.degree_assortativity_coefficient(orig_G)))
     print("Degree Assortativity \t\t generated graph: {}".format(
         nx.degree_assortativity_coefficient(syn_G)))
     
-    return (nx.average_clustering(syn_G), utils.statistics_triangle_count(syn_G), utils.statistics_LCC(syn_A), utils.statistics_power_law_alpha(syn_A), mmd_test(test_degree_sequence, syn_degree_sequence, alphas=[4.], ret_matrix=False), nx.degree_assortativity_coefficient(syn_G))
+    return (nx.average_clustering(syn_G), utils.statistics_triangle_count(syn_G), 
+    utils.statistics_LCC(syn_A), utils.statistics_power_law_alpha(syn_A), 
+    nx.degree_assortativity_coefficient(syn_G))
 
 
 print("Loading adj matrix and features...")
