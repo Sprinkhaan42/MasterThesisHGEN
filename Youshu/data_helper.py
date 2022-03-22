@@ -1,3 +1,7 @@
+"""
+@author: Branco François and Louis Lanckriet
+"""
+
 import pandas as pd
 
 # Making link.dat
@@ -16,6 +20,8 @@ for index, row in user_item.iterrows():
     link_list.append([3000000 + row[0], 2000000 + row[1]])
 
 df = pd.DataFrame(link_list)
+
+#Here we sampled the data, but it did not affect the memory issue
 df = df.sample(frac =.01)
 df.to_csv("link.dat", index=False, header=False, sep=' ')
 
